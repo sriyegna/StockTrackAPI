@@ -1,6 +1,6 @@
 from flask import Flask, request
 from flask_restful import Resource, Api
-from APIFunctions import updateDailyStockDbByTicker, isDailyStockInDb, meanRevisionCalculator, movingDayAverage
+from APIFunctions import updateDailyStockDbByTicker, isDailyStockInDb, meanRevisionCalculator, movingDayAverage, isDailyStockUpToDate
 
 app = Flask(__name__)
 api = Api(app)
@@ -34,16 +34,21 @@ class MovingDayAverage(Resource):
     def get(self, ticker, days):
         result = movingDayAverage(ticker, days)
         print(result)
-        return result
+        return {"MovingDayAverage": result}
 
     #def post(self):
     #    some_json = request.get_json()
     #    return {'input was': some_json}
 
+class StockUpToDate(Resource):
+    def get(self, ticker):
+        return {"UpToDate": isDailyStockUpToDate(ticker)}
+
 
 api.add_resource(UpdateDailyStockDb, '/UpdateDailyStockDb/')
 api.add_resource(MeanRevision, '/MeanRevision/<string:ticker>')
 api.add_resource(MovingDayAverage, '/MovingDayAverage/<string:ticker>&<int:days>')
+api.add_resource(StockUpToDate, '/StockUpToDate/<string:ticker>')
 
 if __name__ == '__main__':
     app.run(debug=True)
