@@ -13,12 +13,22 @@ mycursor = db.cursor(buffered=True)
 #Function to update Daily Stocks in DB by ticker name. Returns # of inserted rows
 def updateDailyStockDbByTicker(ticker):
     try:
+        # Get latest and check if we can update last 100 or all records
+        sql = "SELECT * FROM stockdata WHERE Ticker='%s' ORDER BY Date DESC LIMIT 1" % ticker
+        mycursor.execute(sql)
+        result = mycursor.fetchall()
+        date = result[0][2]
+        #date 70 days ago
+        right_now_70_days_ago = datetime.today() - timedelta(days=70)
+        outputSize = "full"
+        if (date > right_now_70_days_ago):
+            outputSize = "compact"
+
         # Populate Daily
         rowsInserted = 0
         data = json.loads(urllib.request.urlopen(
-            "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&outputsize=full&symbol=%s&apikey=%s" % (
-                ticker, apiKey)).read())
-        print(data)
+            "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&outputsize=%s&symbol=%s&apikey=%s" % (
+                outputSize, ticker, apiKey)).read())
         timeData = data['Time Series (Daily)']
 
         for date in timeData:
@@ -35,7 +45,7 @@ def updateDailyStockDbByTicker(ticker):
                 db.commit()
                 rowsInserted = rowsInserted + 1
             except Exception as ex:
-                print(ex.__class__.__name__)
+                #print(ex.__class__.__name__)
                 print(ex)
         return rowsInserted
     except Exception as ex:
@@ -84,30 +94,31 @@ def meanRevisionCalculator(ticker):
 #Function to calculate moving day average. Returns array
 def movingDayAverage(ticker, days):
     try:
-        sql = "SELECT Close FROM stockdata WHERE Ticker='%s' ORDER BY Date Desc" % ticker
+        sql = "SELECT Close, Date FROM stockdata WHERE Ticker='%s' ORDER BY Date Desc" % ticker
         mycursor.execute(sql)
         result = mycursor.fetchall()
         arr = []
         for i in range(len(result), days-1, -1):
             daySum = 0
             for j in range(days):
+                if (j == 0):
+                    startDate = result[i - j - 1][1]
+                elif (j == days - 1):
+                    endDate = result[i - j - 1][1]
                 daySum = daySum + result[i - j - 1][0]
-            arr.append(daySum/days)
+            arr.append([daySum/days, startDate.strftime("%Y-%m-%d"), endDate.strftime("%Y-%m-%d")])
         return arr
     except Exception as ex:
         print(ex)
 
 
 def isDailyStockUpToDate(ticker):
-    print("test")
     curDate = datetime.date(datetime.now())
     dayOfWeek = curDate.weekday()
     if (dayOfWeek == 6):
         curDate = curDate - timedelta(days=2)
     elif (dayOfWeek == 5):
         curDate = curDate - timedelta(days=1)
-    print(curDate)
-    print("test2")
 
     try:
         sql = "SELECT Date FROM stockdata WHERE Ticker='%s' ORDER BY Date Desc LIMIT 1" % ticker
@@ -121,4 +132,59 @@ def isDailyStockUpToDate(ticker):
     except Exception as ex:
         print(ex)
 
+def getHistoricalData(ticker):
+    try:
+        sql = "SELECT Date, Close FROM stockdata WHERE Ticker='%s' ORDER BY Date Desc" % ticker
+        mycursor.execute(sql)
+        result = mycursor.fetchall()
+        closeArr = []
+        for res in result:
+            closeArr.insert(0, [(res[0]).strftime("%Y-%m-%d"), res[1]])
+        return closeArr
+    except Exception as ex:
+        print(ex)
+
+def getLatestStocksFromDb():
+    try:
+        sql = "SELECT Distinct Ticker FROM stockdata ORDER BY Ticker"
+        mycursor.execute(sql)
+        result = mycursor.fetchall()
+        resultArr = []
+        for res in result:
+            sql = "SELECT * FROM stockdata WHERE Ticker='%s' ORDER BY Date DESC LIMIT 1" % res[0]
+            mycursor.execute(sql)
+            result = mycursor.fetchall()
+
+            stockArr = []
+            for i in range(0, len(result[0])):
+                if (i == 2):
+                    stockArr.append(result[0][i].strftime("%Y-%m-%d"))
+                else:
+                    stockArr.append(result[0][i])
+            resultArr.append(stockArr)
+        return resultArr
+    except Exception as ex:
+        print(ex)
+
+def getPreviousDayStockFromDb():
+    try:
+        sql = "SELECT Distinct Ticker FROM stockdata ORDER BY Ticker"
+        mycursor.execute(sql)
+        result = mycursor.fetchall()
+        resultArr = []
+        for res in result:
+            sql = "SELECT * FROM stockdata WHERE Ticker='%s' ORDER BY Date DESC LIMIT 2" % res[0]
+            mycursor.execute(sql)
+            result = mycursor.fetchall()
+
+            stockArr = []
+            for i in range(0, len(result[1])):
+                if (i == 2):
+                    stockArr.append(result[1][i].strftime("%Y-%m-%d"))
+                else:
+                    stockArr.append(result[1][i])
+            resultArr.append(stockArr)
+        return resultArr
+    except Exception as ex:
+        print(ex)
 

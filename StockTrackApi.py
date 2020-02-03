@@ -1,8 +1,11 @@
 from flask import Flask, request
 from flask_restful import Resource, Api
-from APIFunctions import updateDailyStockDbByTicker, isDailyStockInDb, meanRevisionCalculator, movingDayAverage, isDailyStockUpToDate
+from flask_cors import CORS
+from APIFunctions import updateDailyStockDbByTicker, isDailyStockInDb, meanRevisionCalculator, movingDayAverage, isDailyStockUpToDate, getHistoricalData, getLatestStocksFromDb, getPreviousDayStockFromDb
 
 app = Flask(__name__)
+CORS(app, origins="http://localhost:4200", allow_headers=[
+    "Content-Type"])
 api = Api(app)
 
 #API Endpoint to update daily stock DB using POST
@@ -44,11 +47,27 @@ class StockUpToDate(Resource):
     def get(self, ticker):
         return {"UpToDate": isDailyStockUpToDate(ticker)}
 
+class GetHistoricalData(Resource):
+    def get(self, ticker):
+        return {"HistoricalData": getHistoricalData(ticker)}
+
+class GetLatestStocksFromDb(Resource):
+    def get(self):
+        return {"LatestStocks": getLatestStocksFromDb()}
+
+
+class GetPreviousDayStockFromDb(Resource):
+    def get(self):
+        return {"PreviousStocks": getPreviousDayStockFromDb()}
+
 
 api.add_resource(UpdateDailyStockDb, '/UpdateDailyStockDb/')
 api.add_resource(MeanRevision, '/MeanRevision/<string:ticker>')
 api.add_resource(MovingDayAverage, '/MovingDayAverage/<string:ticker>&<int:days>')
 api.add_resource(StockUpToDate, '/StockUpToDate/<string:ticker>')
+api.add_resource(GetHistoricalData, '/GetHistoricalData/<string:ticker>')
+api.add_resource(GetLatestStocksFromDb, '/GetLatestStocksFromDb/')
+api.add_resource(GetPreviousDayStockFromDb, '/GetPreviousDayStockFromDb/')
 
 if __name__ == '__main__':
     app.run(debug=True)
