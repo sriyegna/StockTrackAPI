@@ -1,6 +1,11 @@
 import mysql.connector
 import json,urllib.request
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
+import time
+import atexit
+from apscheduler.schedulers.background import BackgroundScheduler
+
 #Globals
 db = mysql.connector.connect(
     host="localhost",
@@ -94,7 +99,8 @@ def meanRevisionCalculator(ticker):
 #Function to calculate moving day average. Returns array
 def movingDayAverage(ticker, days):
     try:
-        sql = "SELECT Close, Date FROM stockdata WHERE Ticker='%s' ORDER BY Date Desc" % ticker
+        date_8_years_ago = (datetime.today() - relativedelta(years=4))
+        sql = "SELECT Close, Date FROM stockdata WHERE Ticker='%s' AND Date > '%s' ORDER BY Date Desc" % (ticker, date_8_years_ago)
         mycursor.execute(sql)
         result = mycursor.fetchall()
         arr = []
@@ -188,3 +194,30 @@ def getPreviousDayStockFromDb():
     except Exception as ex:
         print(ex)
 
+def getSAndP500():
+    try:
+        sql = "SELECT * FROM stockdata WHERE Ticker='SPX' ORDER BY Date Desc LIMIT 1"
+        mycursor.execute(sql)
+        result = mycursor.fetchall()
+        return result
+    except Exception as ex:
+        print(ex)
+
+
+def updateAllStocksInDb():
+    try:
+        sql = "SELECT Distinct Ticker FROM stockdata ORDER BY Ticker"
+        mycursor.execute(sql)
+        result = mycursor.fetchall()
+        for res in result:
+            updateDailyStockDbByTicker(res[0])
+    except Exception as ex:
+        print(ex)
+
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=updateAllStocksInDb, trigger="interval", minutes=15)
+scheduler.start()
+
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())

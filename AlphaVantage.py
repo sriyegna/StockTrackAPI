@@ -10,11 +10,10 @@ db = mysql.connector.connect(
 
 mycursor = db.cursor(buffered=True)
 
-tickers = ["TSLA", "COKE", "AMZN", "GOOG", "MSFT"]
-#tickers = ["AAPL"]
+#tickers = ["TSLA", "COKE", "AMZN", "GOOG", "MSFT"]
+tickers = ["SPX"]
 apiKey = "FIYD4XDQPMXOSUH8"
 
-'''
 #Populate Daily
 for ticker in tickers:
     data = json.loads(urllib.request.urlopen("https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&outputsize=full&symbol=%s&apikey=%s" % (ticker, apiKey)).read())
@@ -38,7 +37,7 @@ for ticker in tickers:
         except Exception as ex:
             print(ex.__class__.__name__)
             print(ex)
-'''
+
 
 '''
 for ticker in tickers:
@@ -66,6 +65,8 @@ for ticker in tickers:
     except Exception as ex:
         print(ex)
 '''
+
+'''
 ticker="MSFT"
 days = 5
 sql = "SELECT Close FROM stockdata WHERE Ticker='%s' ORDER BY Date Desc" % ticker
@@ -78,3 +79,4 @@ for i in range(len(result), days-1, -1):
         daySum = daySum + result[i - j - 1][0]
     arr.insert(0, daySum/days)
 print(arr)
+'''
