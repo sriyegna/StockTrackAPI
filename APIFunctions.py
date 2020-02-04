@@ -113,7 +113,12 @@ def movingDayAverage(ticker, days):
                     endDate = result[i - j - 1][1]
                 daySum = daySum + result[i - j - 1][0]
             arr.append([daySum/days, startDate.strftime("%Y-%m-%d"), endDate.strftime("%Y-%m-%d")])
-        return arr
+        #Calculate n day regression
+        print(arr[len(arr) - 1])
+        m = (arr[len(arr) - 1][0] - arr[len(arr) - days - 1][0]) / days
+        b = arr[len(arr) - 1][0] - (days * m)
+        returnArr = [arr, m, b]
+        return returnArr
     except Exception as ex:
         print(ex)
 

@@ -36,7 +36,7 @@ class MeanRevision(Resource):
 class MovingDayAverage(Resource):
     def get(self, ticker, days):
         result = movingDayAverage(ticker, days)
-        return {"MovingDayAverage": result}
+        return {"MovingDayAverage": result[0], "m": result[1], "b": result[2]}
 
     #def post(self):
     #    some_json = request.get_json()
