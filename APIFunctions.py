@@ -97,10 +97,9 @@ def meanRevisionCalculator(ticker):
         print(ex)
 
 #Function to calculate moving day average. Returns array
-def movingDayAverage(ticker, days):
+def movingDayAverage(ticker, days, fromDate, toDate):
     try:
-        date_8_years_ago = (datetime.today() - relativedelta(years=4))
-        sql = "SELECT Close, Date FROM stockdata WHERE Ticker='%s' AND Date > '%s' ORDER BY Date Desc" % (ticker, date_8_years_ago)
+        sql = "SELECT Close, Date FROM stockdata WHERE Ticker='%s' AND Date > '%s' AND Date < '%s' ORDER BY Date Desc" % (ticker, fromDate, toDate)
         mycursor.execute(sql)
         result = mycursor.fetchall()
         arr = []
@@ -221,7 +220,7 @@ def updateAllStocksInDb():
 
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=updateAllStocksInDb, trigger="interval", minutes=15)
+#scheduler.add_job(func=updateAllStocksInDb, trigger="interval", minutes=15)
 scheduler.start()
 
 # Shut down the scheduler when exiting the app

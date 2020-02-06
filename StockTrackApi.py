@@ -34,8 +34,8 @@ class MeanRevision(Resource):
 
 #API Endpoint to pull moving day average from DB for ticker using GET
 class MovingDayAverage(Resource):
-    def get(self, ticker, days):
-        result = movingDayAverage(ticker, days)
+    def get(self, ticker, days, fromDate, toDate):
+        result = movingDayAverage(ticker, days, fromDate, toDate)
         return {"MovingDayAverage": result[0], "m": result[1], "b": result[2]}
 
     #def post(self):
@@ -67,7 +67,7 @@ class GetSAndP500(Resource):
 
 api.add_resource(UpdateDailyStockDb, '/UpdateDailyStockDb/')
 api.add_resource(MeanRevision, '/MeanRevision/<string:ticker>')
-api.add_resource(MovingDayAverage, '/MovingDayAverage/<string:ticker>&<int:days>')
+api.add_resource(MovingDayAverage, '/MovingDayAverage/<string:ticker>&<int:days>&<string:fromDate>&<string:toDate>')
 api.add_resource(StockUpToDate, '/StockUpToDate/<string:ticker>')
 api.add_resource(GetHistoricalData, '/GetHistoricalData/<string:ticker>')
 api.add_resource(GetLatestStocksFromDb, '/GetLatestStocksFromDb/')
