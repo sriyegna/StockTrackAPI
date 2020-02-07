@@ -109,7 +109,7 @@ def meanRevisionCalculator(ticker):
         print(ex)
 
 #Function to calculate moving day average. Returns array
-def movingDayAverage(ticker, days):
+def movingDayAverage(ticker, days, fromDate, toDate):
     try:
         db = connectToDb()
         mycursor = db.cursor(buffered=True)
