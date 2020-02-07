@@ -69,7 +69,7 @@ class GetSAndP500(Resource):
 
 api.add_resource(UpdateDailyStockDb, '/UpdateDailyStockDb/')
 api.add_resource(MeanRevision, '/MeanRevision/<string:ticker>')
-api.add_resource(MovingDayAverage, '/MovingDayAverage/<string:ticker>&<int:days>&<string:fromDate>&<string:toDate>')
+api.add_resource(MovingDayAverage, '/MovingDayAverage/<string:ticker>&<int:days>')
 api.add_resource(StockUpToDate, '/StockUpToDate/<string:ticker>')
 api.add_resource(GetHistoricalData, '/GetHistoricalData/<string:ticker>')
 api.add_resource(GetLatestStocksFromDb, '/GetLatestStocksFromDb/')
