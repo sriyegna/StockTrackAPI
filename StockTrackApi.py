@@ -35,7 +35,9 @@ class MeanRevision(Resource):
 #API Endpoint to pull moving day average from DB for ticker using GET
 class MovingDayAverage(Resource):
     def get(self, ticker, days):
+        print("Starting function")
         result = movingDayAverage(ticker, days)
+        print(result)
         return {"MovingDayAverage": result[0], "m": result[1], "b": result[2]}
 
     #def post(self):

@@ -7,17 +7,22 @@ import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 
 #Globals
-db = mysql.connector.connect(
-    host="localhost",
-    user="python",
-    passwd="python",
-    database="stocktracker"
-)
+def connectToDb():
+    db = mysql.connector.connect(
+        host="localhost",
+        user="python",
+        passwd="python",
+        database="stocktracker"
+    )
+    return db
+
 apiKey = "FIYD4XDQPMXOSUH8"
-mycursor = db.cursor(buffered=True)
+#mycursor = db.cursor(buffered=True)
 #Function to update Daily Stocks in DB by ticker name. Returns # of inserted rows
 def updateDailyStockDbByTicker(ticker):
     try:
+        db = connectToDb()
+        mycursor = db.cursor(buffered=True)
         # Get latest and check if we can update last 100 or all records
         sql = "SELECT * FROM stockdata WHERE Ticker='%s' ORDER BY Date DESC LIMIT 1" % ticker
         mycursor.execute(sql)
@@ -52,6 +57,7 @@ def updateDailyStockDbByTicker(ticker):
             except Exception as ex:
                 #print(ex.__class__.__name__)
                 print(ex)
+        mycursor.close()
         return rowsInserted
     except Exception as ex:
         print(ex)
@@ -59,10 +65,13 @@ def updateDailyStockDbByTicker(ticker):
 #Function to determine if a stock is in the DB. Returns boolean
 def isDailyStockInDb(ticker):
     try:
+        db = connectToDb()
+        mycursor = db.cursor(buffered=True)
         #Get last 50
         sql = "SELECT * FROM stockdata WHERE Ticker='%s' LIMIT 1" % ticker
         mycursor.execute(sql)
         result = mycursor.fetchall()
+        mycursor.close()
         if (len(result) > 0):
             return True
         else:
@@ -73,6 +82,8 @@ def isDailyStockInDb(ticker):
 #Function to calculate provide 50, 200 averages for mean revision. Returns Array
 def meanRevisionCalculator(ticker):
     try:
+        db = connectToDb()
+        mycursor = db.cursor(buffered=True)
         # Get last 50
         sql = "SELECT Close FROM stockdata WHERE Ticker='%s' ORDER BY Date Desc LIMIT 50" % ticker
         mycursor.execute(sql)
@@ -92,6 +103,7 @@ def meanRevisionCalculator(ticker):
         for close in result:
             avg200 = avg200 + close[0]
         avg200 = avg200 / 200
+        mycursor.close()
         return [avg50, avg200]
     except Exception as ex:
         print(ex)
@@ -99,8 +111,12 @@ def meanRevisionCalculator(ticker):
 #Function to calculate moving day average. Returns array
 def movingDayAverage(ticker, days):
     try:
+        db = connectToDb()
+        mycursor = db.cursor(buffered=True)
         date_8_years_ago = (datetime.today() - relativedelta(years=4))
+        print("before sql request")
         sql = "SELECT Close, Date FROM stockdata WHERE Ticker='%s' AND Date > '%s' ORDER BY Date Desc" % (ticker, date_8_years_ago)
+        print("after sql request")
         mycursor.execute(sql)
         result = mycursor.fetchall()
         arr = []
@@ -118,6 +134,7 @@ def movingDayAverage(ticker, days):
         m = (arr[len(arr) - 1][0] - arr[len(arr) - days - 1][0]) / days
         b = arr[len(arr) - 1][0] - (days * m)
         returnArr = [arr, m, b]
+        mycursor.close()
         return returnArr
     except Exception as ex:
         print(ex)
@@ -132,10 +149,13 @@ def isDailyStockUpToDate(ticker):
         curDate = curDate - timedelta(days=1)
 
     try:
+        db = connectToDb()
+        mycursor = db.cursor(buffered=True)
         sql = "SELECT Date FROM stockdata WHERE Ticker='%s' ORDER BY Date Desc LIMIT 1" % ticker
         mycursor.execute(sql)
         result = mycursor.fetchall()
         sqlDate = result[0][0]
+        mycursor.close()
         if (curDate.strftime("%Y-%m-%d") == sqlDate.strftime("%Y-%m-%d")):
             return True
         else:
@@ -145,18 +165,23 @@ def isDailyStockUpToDate(ticker):
 
 def getHistoricalData(ticker):
     try:
+        db = connectToDb()
+        mycursor = db.cursor(buffered=True)
         sql = "SELECT Date, Close FROM stockdata WHERE Ticker='%s' ORDER BY Date Desc" % ticker
         mycursor.execute(sql)
         result = mycursor.fetchall()
         closeArr = []
         for res in result:
             closeArr.insert(0, [(res[0]).strftime("%Y-%m-%d"), res[1]])
+        mycursor.close()
         return closeArr
     except Exception as ex:
         print(ex)
 
 def getLatestStocksFromDb():
     try:
+        db = connectToDb()
+        mycursor = db.cursor(buffered=True)
         sql = "SELECT Distinct Ticker FROM stockdata ORDER BY Ticker"
         mycursor.execute(sql)
         result = mycursor.fetchall()
@@ -173,12 +198,15 @@ def getLatestStocksFromDb():
                 else:
                     stockArr.append(result[0][i])
             resultArr.append(stockArr)
+        mycursor.close()
         return resultArr
     except Exception as ex:
         print(ex)
 
 def getPreviousDayStockFromDb():
     try:
+        db = connectToDb()
+        mycursor = db.cursor(buffered=True)
         sql = "SELECT Distinct Ticker FROM stockdata ORDER BY Ticker"
         mycursor.execute(sql)
         result = mycursor.fetchall()
@@ -195,15 +223,19 @@ def getPreviousDayStockFromDb():
                 else:
                     stockArr.append(result[1][i])
             resultArr.append(stockArr)
+        mycursor.close()
         return resultArr
     except Exception as ex:
         print(ex)
 
 def getSAndP500():
     try:
+        db = connectToDb()
+        mycursor = db.cursor(buffered=True)
         sql = "SELECT * FROM stockdata WHERE Ticker='SPX' ORDER BY Date Desc LIMIT 1"
         mycursor.execute(sql)
         result = mycursor.fetchall()
+        mycursor.close()
         return result
     except Exception as ex:
         print(ex)
@@ -221,7 +253,7 @@ def updateAllStocksInDb():
 
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=updateAllStocksInDb, trigger="interval", minutes=15)
+#scheduler.add_job(func=updateAllStocksInDb, trigger="interval", minutes=15)
 scheduler.start()
 
 # Shut down the scheduler when exiting the app
