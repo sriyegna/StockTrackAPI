@@ -58,6 +58,7 @@ def updateDailyStockDbByTicker(ticker):
                 #print(ex.__class__.__name__)
                 print(ex)
         mycursor.close()
+        db.close()
         return rowsInserted
     except Exception as ex:
         print(ex)
@@ -72,6 +73,7 @@ def isDailyStockInDb(ticker):
         mycursor.execute(sql)
         result = mycursor.fetchall()
         mycursor.close()
+        db.close()
         if (len(result) > 0):
             return True
         else:
@@ -104,6 +106,7 @@ def meanRevisionCalculator(ticker):
             avg200 = avg200 + close[0]
         avg200 = avg200 / 200
         mycursor.close()
+        db.close()
         return [avg50, avg200]
     except Exception as ex:
         print(ex)
@@ -135,6 +138,7 @@ def movingDayAverage(ticker, days, fromDate, toDate):
         b = arr[len(arr) - 1][0] - (days * m)
         returnArr = [arr, m, b]
         mycursor.close()
+        db.close()
         return returnArr
     except Exception as ex:
         print(ex)
@@ -156,6 +160,7 @@ def isDailyStockUpToDate(ticker):
         result = mycursor.fetchall()
         sqlDate = result[0][0]
         mycursor.close()
+        db.close()
         if (curDate.strftime("%Y-%m-%d") == sqlDate.strftime("%Y-%m-%d")):
             return True
         else:
@@ -174,6 +179,7 @@ def getHistoricalData(ticker):
         for res in result:
             closeArr.insert(0, [(res[0]).strftime("%Y-%m-%d"), res[1]])
         mycursor.close()
+        db.close()
         return closeArr
     except Exception as ex:
         print(ex)
@@ -199,6 +205,7 @@ def getLatestStocksFromDb():
                     stockArr.append(result[0][i])
             resultArr.append(stockArr)
         mycursor.close()
+        db.close()
         return resultArr
     except Exception as ex:
         print(ex)
@@ -224,6 +231,7 @@ def getPreviousDayStockFromDb():
                     stockArr.append(result[1][i])
             resultArr.append(stockArr)
         mycursor.close()
+        db.close()
         return resultArr
     except Exception as ex:
         print(ex)
@@ -236,6 +244,7 @@ def getSAndP500():
         mycursor.execute(sql)
         result = mycursor.fetchall()
         mycursor.close()
+        db.close()
         return result
     except Exception as ex:
         print(ex)
@@ -243,11 +252,15 @@ def getSAndP500():
 
 def updateAllStocksInDb():
     try:
+        db = connectToDb()
+        mycursor = db.cursor(buffered=True)
         sql = "SELECT Distinct Ticker FROM stockdata ORDER BY Ticker"
         mycursor.execute(sql)
         result = mycursor.fetchall()
         for res in result:
             updateDailyStockDbByTicker(res[0])
+        mycursor.close()
+        db.close()
     except Exception as ex:
         print(ex)
 
