@@ -116,7 +116,7 @@ def movingDayAverage(ticker, days):
     try:
         db = connectToDb()
         mycursor = db.cursor(buffered=True)
-        date_8_years_ago = (datetime.today() - relativedelta(years=4))
+        date_8_years_ago = (datetime.today() - relativedelta(months=6))
         print("before sql request")
         sql = "SELECT Close, Date FROM stockdata WHERE Ticker='%s' AND Date > '%s' ORDER BY Date Desc" % (ticker, date_8_years_ago)
         print("after sql request")
