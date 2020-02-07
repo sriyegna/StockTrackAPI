@@ -38,7 +38,7 @@ class MovingDayAverage(Resource):
         print("Starting function")
         result = movingDayAverage(ticker, days, fromDate, toDate)
         print(result)
-        return {"MovingDayAverage": result[0], "m": result[1], "b": result[2]}
+        return {"MovingDayAverage": result[0], "m": result[1], "b": result[2], "histStockData": result[3]}
 
     #def post(self):
     #    some_json = request.get_json()

@@ -120,7 +120,9 @@ def movingDayAverage(ticker, days, fromDate, toDate):
         mycursor.execute(sql)
         result = mycursor.fetchall()
         arr = []
+        histStockData = []
         for i in range(len(result), days-1, -1):
+            histStockData.append(result[i-1][0])
             daySum = 0
             for j in range(days):
                 if (j == 0):
@@ -133,7 +135,7 @@ def movingDayAverage(ticker, days, fromDate, toDate):
         print(arr[len(arr) - 1])
         m = (arr[len(arr) - 1][0] - arr[len(arr) - days - 1][0]) / days
         b = arr[len(arr) - 1][0] - (days * m)
-        returnArr = [arr, m, b]
+        returnArr = [arr, m, b, histStockData]
         mycursor.close()
         db.close()
         return returnArr
