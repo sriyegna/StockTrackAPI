@@ -65,36 +65,57 @@ for ticker in tickers:
         data_BSC = get(url).json()
         url = ' https://datafied.api.edgar-online.com/v2/corefinancials/ann?Appkey=2d2d5cb64a16d58eb8d7eac5a2100090&fields=CashFlowStatementConsolidated&primarysymbols=' + ticker + '&numperiods=12&activecompanies=false&deleted=false&sortby=primarysymbol%20asc&debug=false'
         data_CFSC = get(url).json()
-        print(data_BSC['result']['totalrows'])
-        print(data_CFSC['result']['totalrows'])
+        #print(data_BSC['result']['totalrows'])
+        #print(data_CFSC['result']['totalrows'])
         if (data_BSC['result']['totalrows'] == data_CFSC['result']['totalrows']):
             #Same # of rows of data from both calls
             arrayLen = data_CFSC['result']['totalrows']
         for i in range(arrayLen):
-            rowArr = []
+            rowDict = {
+                "cashcashequivalentsandshortterminvestments": 0,
+                "commonstock": 0,
+                "ebit": 0,
+                "grossprofit": 0,
+                "incomebeforetaxes": 0,
+                "incometaxes": 0,
+                "netincome": 0,
+                "operatingprofit": 0,
+                "totallongtermdebt": 0,
+                "totalrevenue": 0,
+                "totalshorttermdebt": 0,
+                "capitalexpenditures": 0,
+                "cfdepreciationamortization": 0,
+                "changeincurrentassets": 0,
+                "changeincurrentliabilities": 0,
+                "workingcapital": 0,
+                "ebitda": 0,
+                "taxrate": 0,
+                "interestexpense": 0
+            }
             for j in range(len(data_BSC['result']['rows'][i]['values'])):
                 fieldName = data_BSC['result']['rows'][i]['values'][j]['field']
                 if (fieldName in fieldsToGather):
-                    rowArr.append(data_BSC['result']['rows'][i]['values'][j]['value'])
+                    #rowArr.append(data_BSC['result']['rows'][i]['values'][j]['value'])
+                    rowDict[fieldName] = data_BSC['result']['rows'][i]['values'][j]['value']
             for j in range(len(data_CFSC['result']['rows'][i]['values'])):
                 fieldName = data_CFSC['result']['rows'][i]['values'][j]['field']
                 if (fieldName in fieldsToGather):
-                    rowArr.append(data_CFSC['result']['rows'][i]['values'][j]['value'])
-            workingCapital = rowArr[13] - rowArr[14]
-            eBITDA = rowArr[2] + rowArr[12]
-            taxRate = rowArr[5] / rowArr[4]
-            interestExpense = rowArr[7] - rowArr[4]
-            rowArr.extend([workingCapital, eBITDA, taxRate, interestExpense])
-
-
+                    #rowArr.append(data_CFSC['result']['rows'][i]['values'][j]['value'])
+                    rowDict[fieldName] = data_CFSC['result']['rows'][i]['values'][j]['value']
+            rowDict["workingcapital"] = rowDict["changeincurrentassets"] - rowDict["changeincurrentliabilities"]
+            rowDict["ebitda"] = rowDict["ebit"] + rowDict["cfdepreciationamortization"]
+            if (rowDict["incomebeforetaxes"] != 0):
+                rowDict["taxrate"] = rowDict["incometaxes"] / rowDict["incomebeforetaxes"]
+            rowDict["interestexpense"] = rowDict["operatingprofit"] - rowDict["incomebeforetaxes"]
             try:
                 db = connectToDb()
                 mycursor = db.cursor(buffered=True)
 
                 Temp_Year = int(datetime.now().year) - 1 - i
                 id = ticker + str(Temp_Year)
+                print(id)
                 sql = "INSERT INTO annualdata (Id, Ticker, Year, Total_Revenue, Gross_Profit, Net_Income, ST_Debt, LT_Debt, C_Equity, EBIT, EBITDA, Income_Tax, Income_Before_Tax, Operating_Profits, Dep_Amort, ChangeInAsset, ChangeInLiab, WorkingCap, CAPEX, Cash, Interest_Expense) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                val = (id, ticker, Temp_Year, rowArr[9], rowArr[3], rowArr[6], rowArr[10], rowArr[8], rowArr[1], rowArr[2], rowArr[16], rowArr[5], rowArr[4], rowArr[7], rowArr[12], rowArr[13], rowArr[14], rowArr[15], rowArr[11], rowArr[0], rowArr[18])
+                val = (id, ticker, Temp_Year, rowDict["totalrevenue"], rowDict["grossprofit"], rowDict["netincome"], rowDict["totalshorttermdebt"], rowDict["totallongtermdebt"], rowDict["commonstock"], rowDict["ebit"], rowDict["ebitda"], rowDict["incometaxes"], rowDict["incomebeforetaxes"], rowDict["operatingprofit"], rowDict["cfdepreciationamortization"], rowDict["changeincurrentassets"], rowDict["changeincurrentliabilities"], rowDict["workingcapital"], rowDict["capitalexpenditures"], rowDict["cashcashequivalentsandshortterminvestments"], rowDict["interestexpense"])
                 mycursor.execute(sql, val)
                 db.commit()
                 mycursor.close()
