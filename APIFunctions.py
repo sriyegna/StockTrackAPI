@@ -7,6 +7,10 @@ import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 
 #Globals
+apiKey = "FIYD4XDQPMXOSUH8"
+
+# Function to generate a unique DB connection
+# If you use one global variable, concurrent calls will return an SSL error
 def connectToDb():
     db = mysql.connector.connect(
         host="localhost",
@@ -16,31 +20,34 @@ def connectToDb():
     )
     return db
 
-apiKey = "FIYD4XDQPMXOSUH8"
-#mycursor = db.cursor(buffered=True)
+
 #Function to update Daily Stocks in DB by ticker name. Returns # of inserted rows
 def updateDailyStockDbByTicker(ticker):
     try:
+        #Create DB connection and buffered cursor
         db = connectToDb()
         mycursor = db.cursor(buffered=True)
+
         # Get latest and check if we can update last 100 or all records
         sql = "SELECT * FROM stockdata WHERE Ticker='%s' ORDER BY Date DESC LIMIT 1" % ticker
         mycursor.execute(sql)
         result = mycursor.fetchall()
         date = result[0][2]
-        #date 70 days ago
+        # Calculate date from 70 days ago as a ballpark. If our last data is within the last 70 days, we can request a smaller data set
         right_now_70_days_ago = datetime.today() - timedelta(days=70)
         outputSize = "full"
+        # If we are within 70 days, request compact data set
         if (date > right_now_70_days_ago):
             outputSize = "compact"
 
-        # Populate Daily
+        # Make the API call to Time_series_daily
         rowsInserted = 0
         data = json.loads(urllib.request.urlopen(
             "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&outputsize=%s&symbol=%s&apikey=%s" % (
                 outputSize, ticker, apiKey)).read())
         timeData = data['Time Series (Daily)']
 
+        # For all results, parse the data and for each set of data, insert it into the database
         for date in timeData:
             open = data['Time Series (Daily)'][date]['1. open']
             high = data['Time Series (Daily)'][date]['2. high']
@@ -49,6 +56,7 @@ def updateDailyStockDbByTicker(ticker):
             volume = data['Time Series (Daily)'][date]['5. volume']
             id = ticker + date
             try:
+                # Create an insert statement with the above data and commit it.
                 sql = "INSERT INTO stockdata (ID, Ticker, Date, Open, High, Low, Close, Volume) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
                 val = (id, ticker, date, open, high, low, close, volume)
                 mycursor.execute(sql, val)
@@ -57,23 +65,27 @@ def updateDailyStockDbByTicker(ticker):
             except Exception as ex:
                 #print(ex.__class__.__name__)
                 print(ex)
+        # Close DB and cursor connection
         mycursor.close()
         db.close()
         return rowsInserted
     except Exception as ex:
         print(ex)
 
-#Function to determine if a stock is in the DB. Returns boolean
+#Function to determine if a given ticker is in the DB. Returns boolean
 def isDailyStockInDb(ticker):
     try:
+        # Create DB and Cursor connection
         db = connectToDb()
         mycursor = db.cursor(buffered=True)
-        #Get last 50
+        # Create SQL Select to get one row from database for the given ticker
         sql = "SELECT * FROM stockdata WHERE Ticker='%s' LIMIT 1" % ticker
         mycursor.execute(sql)
         result = mycursor.fetchall()
+        # Close the DB and cursor connection
         mycursor.close()
         db.close()
+        # Return true if we got a row return, false if we did not.
         if (len(result) > 0):
             return True
         else:
