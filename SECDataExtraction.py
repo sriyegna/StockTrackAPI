@@ -1,6 +1,5 @@
 from requests import get
 import mysql.connector
-import numpy as np
 import json,urllib.request
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
@@ -16,8 +15,8 @@ fieldsToGather = ["cashcashequivalentsandshortterminvestments", "commonstock", "
 def connectToDb():
     db = mysql.connector.connect(
         host="localhost",
-        user="root",
-        passwd="root",
+        user="python",
+        passwd="python",
         database="stocktracker"
     )
     return db
@@ -29,15 +28,14 @@ df = df.rename(columns=str.lower).set_index('symbol').drop('summary quote', axis
 df = df[~df.index.duplicated()]
 tickers = df.index
 
+
 for ticker in tickers:
     try:
         url = 'https://datafied.api.edgar-online.com/v2/corefinancials/ann?Appkey=a4585b035f8bb44392e348073ec85ca2&fields=BalanceSheetConsolidated%2CIncomeStatementConsolidated&primarysymbols=' + ticker + '&numperiods=12&activecompanies=false&deleted=false&sortby=primarysymbol%20asc&debug=false'
         data_BSC = get(url).json()
         url = ' https://datafied.api.edgar-online.com/v2/corefinancials/ann?Appkey=2d2d5cb64a16d58eb8d7eac5a2100090&fields=CashFlowStatementConsolidated&primarysymbols=' + ticker + '&numperiods=12&activecompanies=false&deleted=false&sortby=primarysymbol%20asc&debug=false'
         data_CFSC = get(url).json()
-        if (data_BSC['result']['totalrows'] == data_CFSC['result']['totalrows']):
-            #Same # of rows of data from both calls
-            arrayLen = data_CFSC['result']['totalrows']
+        arrayLen = min(data_BSC['result']['totalrows'], data_CFSC['result']['totalrows'])
         for i in range(arrayLen):
             rowDict = {
                 "cashcashequivalentsandshortterminvestments": 0,
@@ -88,9 +86,11 @@ for ticker in tickers:
                 mycursor.close()
                 db.close()
             except Exception as ex:
-                print(ex)
+                pass
+                # print(ex)
     except Exception as ex:
-        print(ex)
+        pass
+        # print(ex)
 
 
 
