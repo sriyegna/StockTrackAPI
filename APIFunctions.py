@@ -5,6 +5,7 @@ from dateutil.relativedelta import relativedelta
 import time
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
+import numpy as np
 
 #Globals
 apiKey = "FIYD4XDQPMXOSUH8"
@@ -131,7 +132,8 @@ def movingDayAverage(ticker, days, fromDate, toDate):
         sql = "SELECT Close, Date FROM stockdata WHERE Ticker='%s' AND Date > '%s' AND Date < '%s' ORDER BY Date Desc" % (ticker, fromDate, toDate)
         mycursor.execute(sql)
         result = mycursor.fetchall()
-        arr = []
+        nDayArr = []
+        nDayYData = []
         histStockData = []
         for i in range(len(result), days-1, -1):
             histStockData.append(result[i-1][0])
@@ -142,12 +144,19 @@ def movingDayAverage(ticker, days, fromDate, toDate):
                 elif (j == days - 1):
                     endDate = result[i - j - 1][1]
                 daySum = daySum + result[i - j - 1][0]
-            arr.append([daySum/days, startDate.strftime("%Y-%m-%d"), endDate.strftime("%Y-%m-%d")])
-        #Calculate n day regression
-        print(arr[len(arr) - 1])
-        m = (arr[len(arr) - 1][0] - arr[len(arr) - days - 1][0]) / days
-        b = arr[len(arr) - 1][0] - (days * m)
-        returnArr = [arr, m, b, histStockData]
+            nDayArr.append([daySum/days, startDate.strftime("%Y-%m-%d"), endDate.strftime("%Y-%m-%d")])
+            nDayYData.append(daySum/days)
+        #Calculate Best Fit line
+        np_nDayXIndex = np.asarray(range(len(nDayYData)))
+        np_xDayData = np.asarray(nDayYData)
+        bestFit = np.polyfit(np_nDayXIndex, np_xDayData, 1)
+        m = bestFit[0]
+        b = bestFit[1]
+        bestFitData = []
+        for i in range(len(nDayYData)):
+            bestFitData.append(i * m + b)
+
+        returnArr = [nDayArr, bestFitData, histStockData]
         mycursor.close()
         db.close()
         return returnArr

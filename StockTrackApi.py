@@ -44,9 +44,9 @@ class MovingDayAverage(Resource):
     def get(self, ticker, days, fromDate, toDate):
         # Call movingDayAverage from APIFunctions to get MDA, linear slope data, and actual historical data
         result = movingDayAverage(ticker, days, fromDate, toDate)
-        print(result)
+        # print(result)
         # Returns MDA array, slope of linear line, y-intercept of linear line, actual historical stock data
-        return {"MovingDayAverage": result[0], "m": result[1], "b": result[2], "histStockData": result[3]}
+        return {"MovingDayAverage": result[0], "bestFitData": result[1], "histStockData": result[2]}
 
 # API Endpoint to check if a stock is up to date
 class StockUpToDate(Resource):
