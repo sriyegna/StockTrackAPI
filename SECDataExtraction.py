@@ -15,8 +15,8 @@ fieldsToGather = ["cashcashequivalentsandshortterminvestments", "commonstock", "
 def connectToDb():
     db = mysql.connector.connect(
         host="localhost",
-        user="python",
-        passwd="python",
+        user="root",
+        passwd="root",
         database="stocktracker"
     )
     return db
@@ -27,7 +27,6 @@ df = pd.concat([pd.read_csv(url.format(ex)) for ex in exchanges]).dropna(how='al
 df = df.rename(columns=str.lower).set_index('symbol').drop('summary quote', axis=1).dropna(subset=['marketcap'], axis='rows')
 df = df[~df.index.duplicated()]
 tickers = df.index
-
 
 for ticker in tickers:
     try:
@@ -69,10 +68,15 @@ for ticker in tickers:
                     #rowArr.append(data_CFSC['result']['rows'][i]['values'][j]['value'])
                     rowDict[fieldName] = data_CFSC['result']['rows'][i]['values'][j]['value']
             rowDict["workingcapital"] = rowDict["changeincurrentassets"] - rowDict["changeincurrentliabilities"]
-            rowDict["ebitda"] = rowDict["ebit"] + rowDict["cfdepreciationamortization"]
             if (rowDict["incomebeforetaxes"] != 0):
                 rowDict["taxrate"] = rowDict["incometaxes"] / rowDict["incomebeforetaxes"]
             rowDict["interestexpense"] = rowDict["operatingprofit"] - rowDict["incomebeforetaxes"]
+            if (rowDict["ebit"] != 0):
+                rowDict["ebitda"] = rowDict["ebit"] + rowDict["cfdepreciationamortization"]
+            else:
+                rowDict["ebitda"] = rowDict["incomebeforetaxes"] + rowDict["interestexpense"] + rowDict["cfdepreciationamortization"]
+                rowDict["ebit"] =  rowDict["incomebeforetaxes"] + rowDict["interestexpense"]
+
             try:
                 db = connectToDb()
                 mycursor = db.cursor(buffered=True)
