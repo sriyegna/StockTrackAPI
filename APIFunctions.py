@@ -132,6 +132,7 @@ def movingDayAverage(ticker, days, fromDate, toDate):
         sql = "SELECT Close, Date FROM stockdata WHERE Ticker='%s' AND Date > '%s' AND Date < '%s' ORDER BY Date Desc" % (ticker, fromDate, toDate)
         mycursor.execute(sql)
         result = mycursor.fetchall()
+        print(result)
         nDayArr = []
         nDayYData = []
         histStockData = []
@@ -281,6 +282,7 @@ def updateAllStocksInDb():
             updateDailyStockDbByTicker(res[0])
         mycursor.close()
         db.close()
+        print("All stocks updated")
     except Exception as ex:
         print(ex)
 

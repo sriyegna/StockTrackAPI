@@ -62,16 +62,16 @@ for ticker in result:
     mycursor = db.cursor(buffered=True)
     sql = "SELECT * FROM annualdata WHERE Ticker='%s' ORDER BY Year DESC" % ticker[0]
     mycursor.execute(sql)
-    result = mycursor.fetchall()
+    sql_result = mycursor.fetchall()
     mycursor.close()
     db.close()
-    numOfAverages = len(result) - 1
+    numOfAverages = len(sql_result) - 1
     sumAvg = 0
     for i in range(numOfAverages):
-        if (result[i+1][10] == 0):
+        if (sql_result[i+1][10] == 0):
             numOfAverages = numOfAverages - 1
             continue;
-        sumAvg = sumAvg + (result[i][10]/result[i+1][10] - 1)
+        sumAvg = sumAvg + (sql_result[i][10]/sql_result[i+1][10] - 1)
     if (numOfAverages != 0):
         sumAvg = sumAvg / numOfAverages
     else:
@@ -79,7 +79,21 @@ for ticker in result:
 
     # Get multiple EBITDA
     multiEBITDA = 0
-    if (result[0][10] != 0):
-        multiEBITDA = result[0][6] + result[0][7] + result[0][8]/result[i][10]
+    if (sql_result[0][10] != 0):
+        multiEBITDA = sql_result[0][6] + sql_result[0][7] + sql_result[0][8]/sql_result[i][10]
     else:
         multiEBITDA = None
+
+    # Values from Link 3
+    url = 'https://datafied.api.edgar-online.com/v2/corefinancials/ann?Appkey=' + apiKey + '&fields=FinancialRatioData&primarysymbols=' + ticker[0] + '&numperiods=1&activecompanies=false&deleted=false&sortby=primarysymbol%20asc&debug=false'
+    data_CoreFinancials = get(url).json()
+    resultCF = data_CoreFinancials['result']['rows'][0]['values']
+
+    freeCashFlowMargin = 0
+    for res in resultCF:
+        if (res['field'] == "freecashflowmargin"):
+            freeCashFlowMargin = res['value']
+            print(freeCashFlowMargin)
+
+    fcfMultiple = (sql_result[0][6] + sql_result[0][7] + sql_result[0][8]) / (freeCashFlowMargin * sql_result[0][3])
+
