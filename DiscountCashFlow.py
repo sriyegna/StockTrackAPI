@@ -25,37 +25,37 @@ db.close()
 
 for ticker in result:
     # Values from Link 1 - Company name, sector
-    # url = 'https://datafied.api.edgar-online.com/v2/companies?primarysymbols=%s&appkey=%s' % (ticker[0], apiKey)
-    # data_Companies = get(url).json()
-    # companyName = data_Companies['result']['rows'][0]['values'][1]
-    # name = ""
-    # if (companyName['field'] != "companyname"):
-    #     print("companyname for %s is not at index 1" % ticker[0])
-    # else:
-    #     name = companyName['value']
-    #
-    # sicDescriptionData = data_Companies['result']['rows'][0]['values'][8]
-    # sicValue = ""
-    # if (sicDescriptionData['field'] != "sicdescription"):
-    #     print("sicdescription for %s is not at index 8" % ticker[0])
-    # else:
-    #     sicValue = sicDescriptionData['value']
+    url = 'https://datafied.api.edgar-online.com/v2/companies?primarysymbols=%s&appkey=%s' % (ticker[0], apiKey)
+    data_Companies = get(url).json()
+    companyName = data_Companies['result']['rows'][0]['values'][1]
+    name = ""
+    if (companyName['field'] != "companyname"):
+        print("companyname for %s is not at index 1" % ticker[0])
+    else:
+        name = companyName['value']
+
+    sicDescriptionData = data_Companies['result']['rows'][0]['values'][8]
+    sicValue = ""
+    if (sicDescriptionData['field'] != "sicdescription"):
+        print("sicdescription for %s is not at index 8" % ticker[0])
+    else:
+        sicValue = sicDescriptionData['value']
         
     # Values form Link 2 - P/E FY, PE/TTM, P/B
-    # url = 'https://datafied.api.edgar-online.com/v2/corefinancials/ann?Appkey=' + apiKey + '&fields=ValuationRatiosMini&primarysymbols=' + ticker[0] + '&numperiods=1&activecompanies=false&deleted=false&sortby=primarysymbol%20asc&debug=false'
-    # data_Companies = get(url).json()
-    # print(data_Companies['result']['rows'][0]['values'])
-    # result = data_Companies['result']['rows'][0]['values']
-    # for fieldValue in result:
-    #     priceEarningsSfy = 0.0
-    #     priceEarningsTtm = 0.0
-    #     priceBookFy = 0.0
-    #     if fieldValue['field'] == "priceearningsfy":
-    #         priceEarningsSfy = fieldValue['value']
-    #     if fieldValue['field'] == "priceearningsttm":
-    #         priceEarningsTtm = fieldValue['value']
-    #     if fieldValue['field'] == "pricebookfy":
-    #         priceBookFy = fieldValue['value']
+    url = 'https://datafied.api.edgar-online.com/v2/corefinancials/ann?Appkey=' + apiKey + '&fields=ValuationRatiosMini&primarysymbols=' + ticker[0] + '&numperiods=1&activecompanies=false&deleted=false&sortby=primarysymbol%20asc&debug=false'
+    data_Companies = get(url).json()
+    print(data_Companies['result']['rows'][0]['values'])
+    result = data_Companies['result']['rows'][0]['values']
+    for fieldValue in result:
+        priceEarningsSfy = 0.0
+        priceEarningsTtm = 0.0
+        priceBookFy = 0.0
+        if fieldValue['field'] == "priceearningsfy":
+            priceEarningsSfy = fieldValue['value']
+        if fieldValue['field'] == "priceearningsttm":
+            priceEarningsTtm = fieldValue['value']
+        if fieldValue['field'] == "pricebookfy":
+            priceBookFy = fieldValue['value']
 
     # Get EBITDA Growth
     db = connectToDb()
